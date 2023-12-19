@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  MYSQL_DATABASE: tododb
+  MYSQL_HOST: tododb-service.lab-assignment.svc.cluster.local
+  MYSQL_PASSWORD: P@ssword
+  MYSQL_USER: root
+kind: ConfigMap
+metadata:
+  name: dbconfig
+  namespace: lab-assignment
