@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todoapi-app
+  namespace: lab-assignment
+spec:
+  selector:
+    matchLabels:
+      app: todoapi-app
+  template:
+    metadata:
+      labels:
+        app: todoapi-app
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: MYSQL_HOST
+              name: dbconfig
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              key: MYSQL_USER
+              name: dbconfig
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: MYSQL_PASSWORD
+              name: dbconfig
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              key: MYSQL_DATABASE
+              name: dbconfig
+        image: todoapp:final
+        name: todoapi
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8090
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 512Mi
+          requests:
+            cpu: 0.5
+            memory: 512Mi
+      nodeSelector:
+        nodeType: worker
