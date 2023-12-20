@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-database
+  namespace: lab-assignment
+spec:
+  selector:
+    matchLabels:
+      app: mysql-database
+  template:
+    metadata:
+      labels:
+        app: mysql-database
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: MYSQL_PASSWORD
+              name: dbconfig
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              key: MYSQL_DATABASE
+              name: dbconfig
+        image: mysql:latest
+        imagePullPolicy: Never
+        name: mysqldb
+        ports:
+        - containerPort: 3306
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 512Mi
+          requests:
+            cpu: 0.5
+            memory: 512Mi
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: storagepath
+      nodeSelector:
+        nodeType: master
+      volumes:
+      - name: storagepath
+        persistentVolumeClaim:
+          claimName: database-pvc
