@@ -11,7 +11,7 @@ pipeline {
             steps {
                 script {
                     echo "Checking GitHub..."
-                    sh 'github --version || true'
+                    sh 'git --version || true'
                     echo "GitHub check passed!"
                     
                     echo "Checking JDK version..."
