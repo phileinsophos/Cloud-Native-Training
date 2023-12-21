@@ -27,7 +27,7 @@ spec:
               key: MYSQL_DATABASE
               name: dbconfig
         image: mysql:latest
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         name: mysqldb
         ports:
         - containerPort: 3306
@@ -86,9 +86,9 @@ spec:
             configMapKeyRef:
               key: MYSQL_DATABASE
               name: dbconfig
-        image: todoapp:final
+        image: omkarpatil24/todoapp-cldtr:latest
         name: todoapi
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8090
         resources:
