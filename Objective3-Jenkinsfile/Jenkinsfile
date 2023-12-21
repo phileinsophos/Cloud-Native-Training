@@ -138,11 +138,16 @@ pipeline {
                     // API call configuration
                     def apiUrl = "http://${hostIpAddress}:32323/api/v1/todos/dummy"
 
-                    // Making the API call
-                    def response = sh(script: "curl -s ${apiUrl}", returnStdout: true).trim()
-
-                    // Print the API response
-                    echo "API Response: ${response}"
+                    // Making an HTTP request to the API
+                    def response = httpRequest(url: apiUrl, httpMethod: 'GET')
+                    
+                    // Checking the status code and throwing an error if not 200
+                    if (response.getStatus() != 200) {
+                        error "Received non-200 status code: ${response.getStatus()}"
+                    }else{
+                        // Printing the response received
+                        println "API Response: ${response.content}"
+                    }
                 }
             }
         }
