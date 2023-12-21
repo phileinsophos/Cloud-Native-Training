@@ -49,8 +49,8 @@ pipeline {
         stage('Build-App') {
             steps {
                 script {
-                    // Change to the 'Objective 1 - todoapi-application' directory
-                    def appDirectory = "${WORKSPACE}/Objective 1 - todoapi-application"
+                    // Change to the 'Objective1-todoapi-application' directory
+                    def appDirectory = "${WORKSPACE}/Objective1-todoapi-application"
                     dir(appDirectory) {
                         // Build the Maven project using 'mvn clean install'
                         sh "mvn clean install"
@@ -66,8 +66,8 @@ pipeline {
             steps {
                 script {
                     echo "Building docker image of the application..."
-                    // Change to the 'Objective 1 - todoapi-application' directory
-                    def appDirectory = "${WORKSPACE}/Objective 1 - todoapi-application"
+                    // Change to the 'Objective1-todoapi-application' directory
+                    def appDirectory = "${WORKSPACE}/Objective1-todoapi-application"
 
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) 
                     {
