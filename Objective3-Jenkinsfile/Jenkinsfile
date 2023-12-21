@@ -136,7 +136,7 @@ pipeline {
                     def hostIpAddress = sh(script: "hostname -I | cut -d' ' -f1", returnStdout: true).trim()
                     
                     // API call configuration
-                    def apiUrl = "http://${hostIpAddress}:35351/api/v1/todos/dummy"
+                    def apiUrl = "http://${hostIpAddress}:32323/api/v1/todos/dummy"
 
                     // Making the API call
                     def response = sh(script: "curl -s ${apiUrl}", returnStdout: true).trim()
