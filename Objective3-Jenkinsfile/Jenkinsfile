@@ -1,0 +1,150 @@
+pipeline {
+    agent any
+
+    environment {
+        app_docker_image = "todoapp-cldtr:latest" // Replace this with your global image variable
+        helm_chart_name = "todoapp-helm-depl" // Replace this with your global Helm chart variable
+    }
+    
+    stages {
+        stage('Verify-Prereqs') {
+            steps {
+                script {
+                    echo "Checking GitHub..."
+                    sh 'github --version || true'
+                    echo "GitHub check passed!"
+                    
+                    echo "Checking JDK version..."
+                    sh 'java -version 2>&1 | grep version'
+                    echo "JDK version check passed!"
+                    
+                    echo "Checking Docker..."
+                    sh 'docker --version'
+                    echo "Docker check passed!"
+                    
+                    echo "Checking MicroK8s..."
+                    sh 'microk8s.status || true'
+                    echo "MicroK8s check passed!"
+                }
+            }
+        }
+        
+        stage('Pull-Code') {
+            steps {
+                // Clear WORKSPACE directory, if data present
+                deleteDir()
+                
+                // Checkout code from GitHub repository
+                git branch: 'main', url: 'https://github.com/phileinsophos/Cloud-Native-Training.git'
+
+                // Print contents of WORKSPACE directory
+                script {
+                    sh 'ls $WORKSPACE'
+                    // Or if you're using Windows agent
+                    // bat "dir %WORKSPACE%"
+                }
+            }
+        }
+
+        stage('Build-App') {
+            steps {
+                script {
+                    // Change to the 'Objective 1 - todoapi-application' directory
+                    def appDirectory = "${WORKSPACE}/Objective 1 - todoapi-application"
+                    dir(appDirectory) {
+                        // Build the Maven project using 'mvn clean install'
+                        sh "mvn clean install"
+
+                        echo "\n\nList the contents of the 'target' directory"
+                        sh "ls -l target"
+                    }
+                }
+            }
+        }
+
+        stage('Build-Docker-Image') {
+            steps {
+                script {
+                    echo "Building docker image of the application..."
+                    // Change to the 'Objective 1 - todoapi-application' directory
+                    def appDirectory = "${WORKSPACE}/Objective 1 - todoapi-application"
+
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) 
+                    {
+                        dir(appDirectory) {
+                        // Build the Docker image using the Dockerfile in the directory
+                        sh "docker build -t ${env.DOCKER_USERNAME}/${app_docker_image} ."
+                        }
+                    }
+                    
+                    echo "listing docker images present on the system..."
+                    sh "docker images"
+                }
+            }
+        }
+
+        stage('Push-Docker-Image') {
+            steps {
+                script {
+                    // Log in to DockerHub using provided credentials
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) 
+                    {
+                        sh "docker login -u ${env.DOCKER_USERNAME} -p ${env.DOCKER_PASSWORD}"
+
+                        // Push the Docker image to DockerHub
+                        sh "docker push ${env.DOCKER_USERNAME}/${app_docker_image}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy-Helm-Chart') {
+            steps {
+                script {
+                    // Navigate to the workspace
+                    dir(WORKSPACE) {
+                        // List the contents of the workspace
+                        echo "\n\nList the contents of the workspace"
+                        sh "ls -l"
+
+                        // Install the Helm chart
+                        echo "\n\nInstalling the Helm chart"
+                        sh "microk8s helm install ${helm_chart_name} Objective2-todoapp-helm-deployment/"
+
+                    }
+                }
+            }
+        }
+
+        stage('Deploy-Status') {
+            steps {
+                script {
+                    sleep(time: 60, unit: 'SECONDS')
+
+                    echo "\n\nChecking the status of the Helm chart deployment"
+                    sh "microk8s helm status ${helm_chart_name}"
+                    
+                    echo "\n\nView all running objects in lab-assignment namespace"
+                    sh "microk8s kubectl get all -n lab-assignment"
+                }
+            }
+        }
+
+        stage('Test-API-Call') {
+            steps {
+                script {
+                    def hostIpAddress = sh(script: "hostname -I | cut -d' ' -f1", returnStdout: true).trim()
+                    
+                    // API call configuration
+                    def apiUrl = "http://${hostIpAddress}:35351/api/v1/todos/dummy"
+
+                    // Making the API call
+                    def response = sh(script: "curl -s ${apiUrl}", returnStdout: true).trim()
+
+                    // Print the API response
+                    echo "API Response: ${response}"
+                }
+            }
+        }
+    }
+}
